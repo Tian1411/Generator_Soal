@@ -108,7 +108,7 @@ BUATKAN SOAL DENGAN DATA BERIKUT:
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.5-flash",
       contents: userPrompt,
       config: {
         systemInstruction: SYSTEM_PROMPT,
