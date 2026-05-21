@@ -200,8 +200,7 @@ export default function App() {
                 <GraduationCap size={24} />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-slate-900 leading-none">GuruPintar</h1>
-                <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500 mt-1">Smart Exam Generator</p>
+                <h1 className="text-[14px] font-bold tracking-tight text-slate-900 leading-none">EXAM GENERATOR By Guru Kecil</h1>
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm font-medium text-slate-500">
@@ -512,7 +511,7 @@ export default function App() {
              <div className="w-6 h-6 bg-slate-400 rounded-md flex items-center justify-center text-white">
                 <GraduationCap size={16} />
               </div>
-              <span className="font-bold text-slate-400 tracking-tight">GuruPintar</span>
+              <span className="font-bold text-slate-400 tracking-tight">EXAM GENERATOR By Guru Kecil</span>
           </div>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
             Gunakan hasil soal sebagai referensi. Kami merekomendasikan guru untuk tetap meninjau kesesuaian soal dengan karakteristik siswa di sekolah masing-masing.
