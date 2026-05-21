@@ -13,10 +13,10 @@ export interface ExamRequest {
     uraian: number;
   };
   proporsiKognitif: {
-    c1: number;
-    c2: number;
-    c3: number;
-    c4: number;
+    unistructural: number;
+    multistructural: number;
+    relational: number;
+    extendedAbstract: number;
   };
 }
 
@@ -47,6 +47,7 @@ STRUKTUR OUTPUT (IKUTI URUTAN INI):
 1. === KISI-KISI SOAL ===
 Buat tabel Markdown (gunakan simbol | saja): No | Tujuan Pembelajaran | Materi | Indikator Soal | Level | No. Soal & Jenis | Kunci Jawaban
 Keterangan kolom:
+- Level: Harus diisi tingkat kognitif Taksonomi SOLO, yaitu: Unistructural (U), Multistructural (M), Relational (R), atau Extended Abstract (E).
 - No. Soal & Jenis: Berisi nomor soal diikuti jenisnya (Contoh: 1 (PG), 11 (Isian), 16 (Uraian))
 - Kunci Jawaban: Berisi opsi jawaban benar (untuk PG) atau jawaban singkat (untuk Isian) atau keterangan (untuk Uraian)
 
@@ -83,7 +84,7 @@ Petunjuk: Jawablah pertanyaan-pertanyaan di bawah ini dengan uraian yang jelas d
 
 VALIDASI:
 - Jumlah soal HARUS tepat sesuai input.
-- Level kognitif (C1-C4) HARUS sesuai proporsi.
+- Proporsi tingkat kognitif Taksonomi SOLO (Unistructural (U), Multistructural (M), Relational (R), Extended Abstract (E)) HARUS sesuai proporsi yang di-request.
 - Soal harus sesuai dengan materi yang diberikan.
 `;
 
@@ -98,11 +99,11 @@ BUATKAN SOAL DENGAN DATA BERIKUT:
   - Pilihan Ganda: ${request.jumlahSoal.pg}
   - Isian: ${request.jumlahSoal.isian}
   - Uraian: ${request.jumlahSoal.uraian}
-- Proporsi Kognitif:
-  - C1: ${request.proporsiKognitif.c1}%
-  - C2: ${request.proporsiKognitif.c2}%
-  - C3: ${request.proporsiKognitif.c3}%
-  - C4: ${request.proporsiKognitif.c4}%
+- Proporsi Kognitif Taksonomi SOLO:
+  - Unistructural (U): ${request.proporsiKognitif.unistructural}%
+  - Multistructural (M): ${request.proporsiKognitif.multistructural}%
+  - Relational (R): ${request.proporsiKognitif.relational}%
+  - Extended Abstract (E): ${request.proporsiKognitif.extendedAbstract}%
 `;
 
   try {

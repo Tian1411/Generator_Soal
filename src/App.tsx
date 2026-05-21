@@ -37,10 +37,10 @@ export default function App() {
       uraian: 2
     },
     proporsiKognitif: {
-      c1: 40,
-      c2: 30,
-      c3: 20,
-      c4: 10
+      unistructural: 40,
+      multistructural: 30,
+      relational: 20,
+      extendedAbstract: 10
     }
   });
 
@@ -49,7 +49,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
 
-  const totalProporsi = formData.proporsiKognitif.c1 + formData.proporsiKognitif.c2 + formData.proporsiKognitif.c3 + formData.proporsiKognitif.c4;
+  const totalProporsi = formData.proporsiKognitif.unistructural + formData.proporsiKognitif.multistructural + formData.proporsiKognitif.relational + formData.proporsiKognitif.extendedAbstract;
   const isProporsiValid = totalProporsi === 100;
 
   const handleGenerate = async () => {
@@ -323,7 +323,10 @@ export default function App() {
                 {/* Kognitif */}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Proporsi Kognitif</span>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Proporsi Kognitif</span>
+                      <span className="text-[9px] text-slate-400 font-medium">Taksonomi SOLO (U - M - R - E)</span>
+                    </div>
                     <span className={cn(
                       "text-[10px] font-bold px-1.5 py-0.5 rounded",
                       isProporsiValid ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
@@ -332,18 +335,25 @@ export default function App() {
                     </span>
                   </div>
                   <div className="grid grid-cols-4 gap-2">
-                    {['c1', 'c2', 'c3', 'c4'].map((level) => (
-                      <div key={level} className="space-y-1 text-center">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">{level}</label>
+                    {[
+                      { key: 'unistructural', label: 'U (Uni)', desc: 'Unistructural: Sederhana / satu aspek informasi' },
+                      { key: 'multistructural', label: 'M (Multi)', desc: 'Multistructural: Beberapa aspek terpisah' },
+                      { key: 'relational', label: 'R (Rel)', desc: 'Relational: Hubungan / antar konsep terkait' },
+                      { key: 'extendedAbstract', label: 'E (Ext)', desc: 'Extended Abstract: Generalisasi konsep baru' }
+                    ].map((item) => (
+                      <div key={item.key} className="space-y-1 text-center group relative">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block cursor-help" title={item.desc}>
+                          {item.label}
+                        </label>
                         <input 
                           type="number"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-2 text-xs text-center"
-                          value={formData.proporsiKognitif[level as keyof typeof formData.proporsiKognitif]}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                          value={formData.proporsiKognitif[item.key as keyof typeof formData.proporsiKognitif]}
                           onChange={(e) => setFormData({
                             ...formData, 
                             proporsiKognitif: {
                               ...formData.proporsiKognitif, 
-                              [level]: parseInt(e.target.value) || 0
+                              [item.key]: parseInt(e.target.value) || 0
                             }
                           })}
                         />
@@ -388,7 +398,7 @@ export default function App() {
               <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">Tips Penyusunan</h3>
               <ul className="text-[11px] text-blue-700 space-y-1.5 list-disc pl-3">
                 <li>Masukkan materi secara detail agar soal lebih spesifik.</li>
-                <li>Gunakan rasio 40-30-20-10 untuk keseimbangan tingkat kesulitan.</li>
+                <li>Gunakan rasio 40-30-20-10 untuk keseimbangan tingkat kesulitan taksonomi SOLO (U-M-R-E).</li>
                 <li>Soal yang dihasilkan sudah termasuk kunci jawaban & pedoman penskoran.</li>
               </ul>
             </div>
