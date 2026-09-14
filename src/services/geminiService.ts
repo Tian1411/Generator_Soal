@@ -2,6 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+export type TaxonomyType = 'solo' | 'bloom';
+
 export interface ExamRequest {
   jenisPenilaian: string;
   kelas: string;
@@ -12,11 +14,18 @@ export interface ExamRequest {
     isian: number;
     uraian: number;
   };
-  proporsiKognitif: {
+  taxonomyType: TaxonomyType;
+  proporsiKognitifSolo: {
     unistructural: number;
     multistructural: number;
     relational: number;
     extendedAbstract: number;
+  };
+  proporsiKognitifBloom: {
+    c1: number;
+    c2: number;
+    c3: number;
+    c4: number;
   };
 }
 
@@ -47,7 +56,9 @@ STRUKTUR OUTPUT (IKUTI URUTAN INI):
 1. === KISI-KISI SOAL ===
 Buat tabel Markdown (gunakan simbol | saja): No | Tujuan Pembelajaran | Materi | Indikator Soal | Level | No. Soal & Jenis | Kunci Jawaban
 Keterangan kolom:
-- Level: Harus diisi tingkat kognitif Taksonomi SOLO, yaitu: Unistructural (U), Multistructural (M), Relational (R), atau Extended Abstract (E).
+- Level: Harus diisi tingkat kognitif sesuai taksonomi yang diminta oleh guru:
+  * Jika Taksonomi SOLO: Unistructural (U), Multistructural (M), Relational (R), atau Extended Abstract (E).
+  * Jika Taksonomi BLOOM: C1 (Mengingat), C2 (Memahami), C3 (Mengaplikasikan), atau C4 (Menganalisis).
 - No. Soal & Jenis: Berisi nomor soal diikuti jenisnya (Contoh: 1 (PG), 11 (Isian), 16 (Uraian))
 - Kunci Jawaban: Berisi opsi jawaban benar (untuk PG) atau jawaban singkat (untuk Isian) atau keterangan (untuk Uraian)
 
@@ -84,11 +95,28 @@ Petunjuk: Jawablah pertanyaan-pertanyaan di bawah ini dengan uraian yang jelas d
 
 VALIDASI:
 - Jumlah soal HARUS tepat sesuai input.
-- Proporsi tingkat kognitif Taksonomi SOLO (Unistructural (U), Multistructural (M), Relational (R), Extended Abstract (E)) HARUS sesuai proporsi yang di-request.
+- Proporsi tingkat kognitif HARUS sesuai dengan jenis taksonomi dan persentase yang diminta guru.
 - Soal harus sesuai dengan materi yang diberikan.
 `;
 
 export async function generateExam(request: ExamRequest) {
+  const isBloom = request.taxonomyType === 'bloom';
+  const taxonomyDetails = isBloom
+    ? `- Taksonomi Kognitif yang Dipilih: Taksonomi BLOOM (Revisi)
+- Proporsi Kognitif Taksonomi BLOOM:
+  - C1 (Mengingat): ${request.proporsiKognitifBloom.c1}%
+  - C2 (Memahami): ${request.proporsiKognitifBloom.c2}%
+  - C3 (Mengaplikasikan / Menerapkan): ${request.proporsiKognitifBloom.c3}%
+  - C4 (Menganalisis): ${request.proporsiKognitifBloom.c4}%
+Catatan Level di Kisi-kisi: Tuliskan level Bloom (C1, C2, C3, C4) pada kolom Level.`
+    : `- Taksonomi Kognitif yang Dipilih: Taksonomi SOLO
+- Proporsi Kognitif Taksonomi SOLO:
+  - Unistructural (U): ${request.proporsiKognitifSolo.unistructural}%
+  - Multistructural (M): ${request.proporsiKognitifSolo.multistructural}%
+  - Relational (R): ${request.proporsiKognitifSolo.relational}%
+  - Extended Abstract (E): ${request.proporsiKognitifSolo.extendedAbstract}%
+Catatan Level di Kisi-kisi: Tuliskan level SOLO (U, M, R, E) pada kolom Level.`;
+
   const userPrompt = `
 BUATKAN SOAL DENGAN DATA BERIKUT:
 - Jenis Penilaian: ${request.jenisPenilaian}
@@ -99,11 +127,7 @@ BUATKAN SOAL DENGAN DATA BERIKUT:
   - Pilihan Ganda: ${request.jumlahSoal.pg}
   - Isian: ${request.jumlahSoal.isian}
   - Uraian: ${request.jumlahSoal.uraian}
-- Proporsi Kognitif Taksonomi SOLO:
-  - Unistructural (U): ${request.proporsiKognitif.unistructural}%
-  - Multistructural (M): ${request.proporsiKognitif.multistructural}%
-  - Relational (R): ${request.proporsiKognitif.relational}%
-  - Extended Abstract (E): ${request.proporsiKognitif.extendedAbstract}%
+${taxonomyDetails}
 `;
 
   try {

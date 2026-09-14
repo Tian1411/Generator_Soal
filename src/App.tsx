@@ -36,11 +36,18 @@ export default function App() {
       isian: 5,
       uraian: 2
     },
-    proporsiKognitif: {
+    taxonomyType: 'solo',
+    proporsiKognitifSolo: {
       unistructural: 40,
       multistructural: 30,
       relational: 20,
       extendedAbstract: 10
+    },
+    proporsiKognitifBloom: {
+      c1: 40,
+      c2: 30,
+      c3: 20,
+      c4: 10
     }
   });
 
@@ -49,7 +56,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
 
-  const totalProporsi = formData.proporsiKognitif.unistructural + formData.proporsiKognitif.multistructural + formData.proporsiKognitif.relational + formData.proporsiKognitif.extendedAbstract;
+  const totalProporsi = formData.taxonomyType === 'solo'
+    ? formData.proporsiKognitifSolo.unistructural + formData.proporsiKognitifSolo.multistructural + formData.proporsiKognitifSolo.relational + formData.proporsiKognitifSolo.extendedAbstract
+    : formData.proporsiKognitifBloom.c1 + formData.proporsiKognitifBloom.c2 + formData.proporsiKognitifBloom.c3 + formData.proporsiKognitifBloom.c4;
   const isProporsiValid = totalProporsi === 100;
 
   const handleGenerate = async () => {
@@ -321,10 +330,46 @@ export default function App() {
 
                 {/* Kognitif */}
                 <div className="space-y-3 pt-2">
-                  <div className="flex justify-between items-center">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      Pilihan Taksonomi
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/70">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, taxonomyType: 'solo' })}
+                        className={cn(
+                          "py-1.5 px-2 text-xs font-semibold rounded-lg transition-all text-center",
+                          formData.taxonomyType === 'solo'
+                            ? "bg-white text-brand-primary shadow-xs font-bold border border-slate-200/50"
+                            : "text-slate-500 hover:text-slate-700"
+                        )}
+                      >
+                        Taksonomi SOLO
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, taxonomyType: 'bloom' })}
+                        className={cn(
+                          "py-1.5 px-2 text-xs font-semibold rounded-lg transition-all text-center",
+                          formData.taxonomyType === 'bloom'
+                            ? "bg-white text-brand-primary shadow-xs font-bold border border-slate-200/50"
+                            : "text-slate-500 hover:text-slate-700"
+                        )}
+                      >
+                        Taksonomi BLOOM
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-1">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Proporsi Kognitif</span>
-                      <span className="text-[9px] text-slate-400 font-medium">Taksonomi SOLO (U - M - R - E)</span>
+                      <span className="text-[9px] text-slate-400 font-medium">
+                        {formData.taxonomyType === 'solo' 
+                          ? 'Taksonomi SOLO (U - M - R - E)' 
+                          : 'Taksonomi BLOOM (C1 - C2 - C3 - C4)'}
+                      </span>
                     </div>
                     <span className={cn(
                       "text-[10px] font-bold px-1.5 py-0.5 rounded",
@@ -333,32 +378,62 @@ export default function App() {
                       {totalProporsi}% / 100%
                     </span>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { key: 'unistructural', label: 'U (Uni)', desc: 'Unistructural: Sederhana / satu aspek informasi' },
-                      { key: 'multistructural', label: 'M (Multi)', desc: 'Multistructural: Beberapa aspek terpisah' },
-                      { key: 'relational', label: 'R (Rel)', desc: 'Relational: Hubungan / antar konsep terkait' },
-                      { key: 'extendedAbstract', label: 'E (Ext)', desc: 'Extended Abstract: Generalisasi konsep baru' }
-                    ].map((item) => (
-                      <div key={item.key} className="space-y-1 text-center group relative">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase block cursor-help" title={item.desc}>
-                          {item.label}
-                        </label>
-                        <input 
-                          type="number"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                          value={formData.proporsiKognitif[item.key as keyof typeof formData.proporsiKognitif]}
-                          onChange={(e) => setFormData({
-                            ...formData, 
-                            proporsiKognitif: {
-                              ...formData.proporsiKognitif, 
-                              [item.key]: parseInt(e.target.value) || 0
-                            }
-                          })}
-                        />
-                      </div>
-                    ))}
-                  </div>
+
+                  {formData.taxonomyType === 'solo' ? (
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { key: 'unistructural', label: 'U (Uni)', desc: 'Unistructural: Sederhana / satu aspek informasi' },
+                        { key: 'multistructural', label: 'M (Multi)', desc: 'Multistructural: Beberapa aspek terpisah' },
+                        { key: 'relational', label: 'R (Rel)', desc: 'Relational: Hubungan / antar konsep terkait' },
+                        { key: 'extendedAbstract', label: 'E (Ext)', desc: 'Extended Abstract: Generalisasi konsep baru' }
+                      ].map((item) => (
+                        <div key={item.key} className="space-y-1 text-center group relative">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase block cursor-help" title={item.desc}>
+                            {item.label}
+                          </label>
+                          <input 
+                            type="number"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                            value={formData.proporsiKognitifSolo[item.key as keyof typeof formData.proporsiKognitifSolo]}
+                            onChange={(e) => setFormData({
+                              ...formData, 
+                              proporsiKognitifSolo: {
+                                ...formData.proporsiKognitifSolo, 
+                                [item.key]: parseInt(e.target.value) || 0
+                              }
+                            })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { key: 'c1', label: 'C1 (Ingat)', desc: 'C1 Mengingat: Mengingat kembali fakta atau konsep' },
+                        { key: 'c2', label: 'C2 (Paham)', desc: 'C2 Memahami: Menjelaskan ide atau konsep' },
+                        { key: 'c3', label: 'C3 (Terap)', desc: 'C3 Menerapkan/Mengaplikasikan: Menggunakan konsep di situasi baru' },
+                        { key: 'c4', label: 'C4 (Nalar)', desc: 'C4 Menganalisis: Menguraikan materi ke bagian-bagiannya' }
+                      ].map((item) => (
+                        <div key={item.key} className="space-y-1 text-center group relative">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase block cursor-help" title={item.desc}>
+                            {item.label}
+                          </label>
+                          <input 
+                            type="number"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                            value={formData.proporsiKognitifBloom[item.key as keyof typeof formData.proporsiKognitifBloom]}
+                            onChange={(e) => setFormData({
+                              ...formData, 
+                              proporsiKognitifBloom: {
+                                ...formData.proporsiKognitifBloom, 
+                                [item.key]: parseInt(e.target.value) || 0
+                              }
+                            })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {error && (
@@ -396,9 +471,10 @@ export default function App() {
             <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl">
               <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">Tips Penyusunan</h3>
               <ul className="text-[11px] text-blue-700 space-y-1.5 list-disc pl-3">
+                <li>Pilih Taksonomi SOLO atau Taksonomi BLOOM sesuai standar penilaian sekolah Anda.</li>
                 <li>Masukkan materi secara detail agar soal lebih spesifik.</li>
-                <li>Gunakan rasio 40-30-20-10 untuk keseimbangan tingkat kesulitan taksonomi SOLO (U-M-R-E).</li>
-                <li>Soal yang dihasilkan sudah termasuk kunci jawaban & pedoman penskoran.</li>
+                <li>Gunakan rasio 40-30-20-10 untuk keseimbangan tingkat kesulitan.</li>
+                <li>Soal yang dihasilkan sudah termasuk kisi-kisi, kunci jawaban & pedoman penskoran.</li>
               </ul>
             </div>
           </aside>
