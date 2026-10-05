@@ -34,10 +34,30 @@ export async function generateExam(request: ExamRequest): Promise<string> {
     body: JSON.stringify(request),
   });
 
-  const data = await response.json();
+  const rawText = await response.text();
+  let data: any = null;
+
+  if (rawText && rawText.trim().length > 0) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      // If it is not JSON (e.g., HTML error page from host)
+      if (!response.ok) {
+        throw new Error(
+          `Server mengembalikan status ${response.status} (${response.statusText || 'Error'}). Pastikan API route dan GEMINI_API_KEY sudah terpasang di Vercel.`
+        );
+      }
+      throw new Error('Respon dari server tidak berformat JSON yang valid.');
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data.error || 'Gagal menghasilkan soal');
+    const errorMsg = data?.error || `Gagal menghasilkan soal (HTTP ${response.status})`;
+    throw new Error(errorMsg);
+  }
+
+  if (!data?.text) {
+    throw new Error('Respon server kosong atau tidak memiliki konten soal.');
   }
 
   return data.text;
