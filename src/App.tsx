@@ -78,8 +78,8 @@ export default function App() {
     try {
       const examContent = await generateExam(formData);
       setResult(examContent || '');
-    } catch (err) {
-      setError('Gagal menghasilkan soal. Silakan coba lagi.');
+    } catch (err: any) {
+      setError(err?.message || 'Gagal menghasilkan soal. Silakan coba lagi.');
       console.error(err);
     } finally {
       setLoading(false);
