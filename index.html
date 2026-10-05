@@ -1,13 +1,33 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pembuat soal otomatis by guru.kecil</title>
+    <title>Guru Pintar - Generator Soal SD</title>
+    <meta name="description" content="Aplikasi cerdas untuk membantu guru SD menyusun paket soal sumatif, kisi-kisi, kunci jawaban, dan pedoman penskoran secara otomatis sesuai Kurikulum Merdeka." />
+    <meta property="og:title" content="Guru Pintar - Generator Soal SD" />
+    <meta property="og:description" content="Aplikasi cerdas untuk membantu guru SD menyusun paket soal sumatif, kisi-kisi, kunci jawaban, dan pedoman penskoran secara otomatis sesuai Kurikulum Merdeka." />
+    <script>
+      // Ignore Vite HMR WebSocket connection errors in preview/iframe environment
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event.reason;
+        var msg = (reason && (reason.message || String(reason))) || '';
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('ws') !== -1) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+      window.addEventListener('error', function(event) {
+        var msg = (event && (event.message || '')) || '';
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('ws') !== -1) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
