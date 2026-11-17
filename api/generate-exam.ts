@@ -71,11 +71,31 @@ Petunjuk: Jawablah pertanyaan-pertanyaan di bawah ini dengan uraian yang jelas d
 (Daftar soal uraian melanjutkan nomor setelah soal Isian terakhir...)
 
 3. === KUNCI JAWABAN & PEDOMAN PENSKORAN ===
-- Berikan kunci jawaban yang LENGKAP, JELAS, dan KONSISTEN dengan kolom Kunci Jawaban di Kisi-kisi untuk seluruh nomor soal dari 1 sampai nomor terakhir (tanpa menulis "variatif" atau "kebijakan guru").
-- Berikan rubrik penilaian untuk bagian Uraian agar guru mudah memberikan skor.
+ATURAN FORMAT WAJIB:
+- DILARANG KERAS menyajikan Kunci Jawaban maupun Pedoman Penskoran dalam bentuk tabel (JANGAN gunakan simbol | atau format tabel pada bagian ini).
+- Sajikan seluruh Kunci Jawaban dan Pedoman Penskoran dalam bentuk daftar bernomor dan poin teks biasa yang rapi seperti contoh berikut:
+
+KUNCI JAWABAN
+I. Pilihan Ganda
+1. A. [Teks jawaban lengkap]
+2. B. [Teks jawaban lengkap]
+
+II. Isian
+11. [Jawaban lengkap dan pasti]
+
+III. Uraian
+16. [Kunci jawaban lengkap dalam kalimat/poin konkret]
+
+PEDOMAN PENSKORAN
+- Pilihan Ganda: Setiap jawaban benar mendapat skor 1, jawaban salah skor 0. (Skor maksimal = ...)
+- Isian: Setiap jawaban benar mendapat skor 2, jawaban kurang tepat skor 1, kosong/salah skor 0. (Skor maksimal = ...)
+- Uraian (Rubrik per Soal):
+  * Nomor 16: Skor 4 jika jawaban lengkap dan tepat sesuai seluruh kriteria; Skor 3 jika sebagian besar benar; Skor 2 jika hanya menyebutkan sebagian kecil; Skor 1 jika kurang relevan; Skor 0 jika tidak menjawab.
+- Rumus Nilai Akhir: Nilai = (Total Skor Perolehan / Total Skor Maksimal) x 100
 
 VALIDASI:
 - Jumlah baris pada tabel Kisi-Kisi HARUS sama persis dengan total jumlah soal (PG + Isian + Uraian) dan mencantumkan semua nomor dari 1 hingga akhir satu per satu.
+- Hanya bagian Kisi-Kisi Soal yang berbentuk tabel. Bagian Kunci Jawaban & Pedoman Penskoran WAJIB berbentuk daftar teks (BUKAN tabel).
 - Tidak boleh ada kunci jawaban bertuliskan "variatif", "bervariasi", atau "kebijakan guru".
 - Proporsi tingkat kognitif HARUS sesuai dengan jenis taksonomi dan persentase yang diminta guru.
 - Soal harus sesuai dengan materi yang diberikan.
@@ -89,6 +109,14 @@ function formatApiErrorMessage(error: any): string {
     const parsed = JSON.parse(rawMessage);
     if (parsed?.error?.message) {
       parsedMessage = parsed.error.message;
+      try {
+        const inner = JSON.parse(parsedMessage);
+        if (inner?.error?.message) {
+          parsedMessage = inner.error.message;
+        }
+      } catch {
+        // Inner message is plain text
+      }
     }
   } catch {
     // Keep rawMessage
@@ -104,6 +132,14 @@ function formatApiErrorMessage(error: any): string {
 
   if (rawMessage.includes('RESOURCE_EXHAUSTED') || rawMessage.includes('429')) {
     return 'Kuota permintaan Gemini API sementara penuh (429). Silakan tunggu sebentar lalu coba lagi, atau periksa paket/API key Anda di panel Settings > Secrets.';
+  }
+
+  if (
+    rawMessage.includes('503') ||
+    rawMessage.includes('UNAVAILABLE') ||
+    rawMessage.toLowerCase().includes('high demand')
+  ) {
+    return 'Server AI sedang mengalami lonjakan trafik sementara (503). Silakan klik "Buat Paket Soal" lagi dalam beberapa detik.';
   }
 
   if (
@@ -131,7 +167,10 @@ async function streamExamWithFallback(
 
   const now = Date.now();
   const activeAttempts = candidates.filter((c) => (modelCooldownUntil.get(c.model) ?? 0) <= now);
-  const attempts = activeAttempts.length > 0 ? activeAttempts : candidates;
+  const attempts =
+    activeAttempts.length > 0
+      ? [...activeAttempts, { model: 'gemini-3.1-flash-lite', thinkingLevel: ThinkingLevel.MINIMAL }]
+      : [...candidates, { model: 'gemini-3.1-flash-lite', thinkingLevel: ThinkingLevel.MINIMAL }];
 
   let lastError: any = null;
 
@@ -294,6 +333,7 @@ ${hotsInstruction}
   2. Tabel kisi-kisi WAJIB memuat seluruh nomor soal secara lengkap satu per satu dari nomor 1 hingga nomor ${totalSoalCount} (${totalSoalCount} baris data, tidak boleh digabung).
   3. Kolom Kunci Jawaban pada tabel kisi-kisi WAJIB berisi kunci jawaban yang lengkap, pasti, dan jelas untuk setiap nomor (termasuk Isian dan Uraian). DILARANG menulis jawaban yang variatif seperti "variatif", "bervariasi", atau "kebijakan guru".
 - Catatan Bahan Bacaan: Apabila soal membutuhkan bahan bacaan/teks stimulus (terutama pada materi teks bacaan, literasi, studi kasus, atau HOTS), sertakan bahan bacaan secara lengkap tepat sebelum nomor soal yang membutuhkannya di bagian Lembar Soal.
+- Catatan Format Kunci Jawaban & Pedoman Penskoran: Bagian === KUNCI JAWABAN & PEDOMAN PENSKORAN === WAJIB ditulis dalam bentuk daftar bernomor dan poin teks biasa (DILARANG dibuat dalam bentuk tabel).
 `;
 
   // Start SSE stream immediately to prevent idle proxy/gateway timeouts
