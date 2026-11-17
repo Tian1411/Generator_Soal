@@ -378,7 +378,7 @@ export default function App() {
     const flushTable = (rows: string[][]): string => {
       if (rows.length === 0) return '';
       const colCount = Math.max(...rows.map((r) => r.length));
-      const defaultKisiWidths = ['5%', '17%', '13%', '35%', '8%', '11%', '11%'];
+      const defaultKisiWidths = ['5%', '15%', '11%', '30%', '7%', '10%', '22%'];
       const colWidths =
         colCount === 7
           ? defaultKisiWidths

@@ -30,13 +30,17 @@ STRUKTUR OUTPUT (IKUTI URUTAN INI):
 
 1. === KISI-KISI SOAL ===
 Buat tabel Markdown (gunakan simbol | saja): No | Tujuan Pembelajaran | Materi | Indikator Soal | Level | No. Soal & Jenis | Kunci Jawaban
-Keterangan kolom:
+ATURAN KETAT TABEL KISI-KISI:
+- SEMUA NOMOR SOAL WAJIB DISEBUTKAN SATU PER SATU: Setiap nomor soal harus memiliki 1 baris tersendiri secara berurutan dari nomor 1 sampai nomor terakhir (total baris data = jumlah seluruh soal PG + Isian + Uraian). DILARANG KERAS menggabungkan beberapa nomor soal dalam satu baris (misalnya: 1-5, 1 & 2, atau 1, 2, 3).
 - Indikator Soal: WAJIB dibuat secara RINCI, LENGKAP, dan OPERASIONAL (JANGAN dibuat ringkas/singkat). Gunakan pola kalimat lengkap yang menjelaskan: (1) stimulus atau situasi yang diberikan kepada siswa (misalnya: "Disajikan sebuah teks cerita pendek / ilustrasi kasus sehari-hari / tabel data tentang..."), (2) perilaku atau tindakan spesifik yang harus dilakukan siswa ("peserta didik dapat menganalisis / membandingkan / menyimpulkan / menentukan..."), serta (3) rincian tugas dan hasil yang diharapkan ("...berdasarkan alasan yang logis dengan tepat"). Dengan membaca indikator soal ini, siswa dan guru langsung memahami apa yang akan dikerjakan pada nomor soal tersebut.
 - Level: Harus diisi tingkat kognitif sesuai taksonomi yang diminta oleh guru:
   * Jika Taksonomi SOLO: Unistructural (U), Multistructural (M), Relational (R), atau Extended Abstract (E).
   * Jika Taksonomi BLOOM: C1 (Mengingat), C2 (Memahami), C3 (Mengaplikasikan), atau C4 (Menganalisis).
-- No. Soal & Jenis: Berisi nomor soal diikuti jenisnya (Contoh: 1 (PG), 11 (Isian), 16 (Uraian))
-- Kunci Jawaban: Berisi opsi jawaban benar (untuk PG) atau jawaban singkat (untuk Isian) atau keterangan (untuk Uraian)
+- No. Soal & Jenis: Berisi satu nomor soal tunggal yang berurutan dan jenisnya (Contoh: 1 (PG), 2 (PG), ..., 11 (Isian), ..., 16 (Uraian)).
+- Kunci Jawaban: WAJIB diisi kunci jawaban yang PASTI, LENGKAP, dan JELAS untuk setiap nomor soal. DILARANG KERAS menulis "Variatif", "Bervariasi", "Kebijakan guru", "Disesuaikan", "Bebas", atau keterangan mengambang lainnya pada soal PG, Isian, maupun Uraian:
+  * Untuk Pilihan Ganda: Tuliskan huruf opsi beserta teks jawabannya secara lengkap (Contoh: A. Jakarta).
+  * Untuk Isian: Tuliskan jawaban singkat yang pasti dan jelas (Contoh: Ibu kota Indonesia adalah Jakarta -> Jakarta).
+  * Untuk Uraian: Tuliskan kunci jawaban lengkap berupa kalimat/poin jawaban konkret yang benar dan jelas (Contoh: 1. Menjaga kebersihan kelas; 2. Membuang sampah pada tempatnya; 3. Melaksanakan piket harian).
 
 2. === LEMBAR SOAL ===
 Sertakan KOP SOAL di awal bagian ini:
@@ -48,9 +52,10 @@ JENIS PENILAIAN: {JENIS_PENILAIAN}
 WAKTU: 90 MENIT
 ---------------------------------------------------------
 
+Gunakan penomoran soal yang BERURUTAN TERUS-MENERUS dari nomor 1 sampai nomor terakhir agar sinkron 100% dengan tabel Kisi-Kisi!
 I. PILIHAN GANDA
 Petunjuk: Berilah tanda silang (X) pada huruf A, B, C, atau D di depan jawaban yang paling benar!
-(Daftar soal PG nomor 1 dst...)
+(Daftar soal PG mulai nomor 1 dst...)
 1. [Soal]
    A. [Pilihan]
    B. [Pilihan]
@@ -59,18 +64,19 @@ Petunjuk: Berilah tanda silang (X) pada huruf A, B, C, atau D di depan jawaban y
 
 II. ISIAN 
 Petunjuk: Isilah titik-titik di bawah ini dengan jawaban yang benar!
-(Daftar soal isian nomor 1 dst...)
+(Daftar soal isian melanjutkan nomor setelah soal PG terakhir...)
 
 III. URAIAN
 Petunjuk: Jawablah pertanyaan-pertanyaan di bawah ini dengan uraian yang jelas dan tepat!
-(Daftar soal uraian nomor 1 dst...)
+(Daftar soal uraian melanjutkan nomor setelah soal Isian terakhir...)
 
 3. === KUNCI JAWABAN & PEDOMAN PENSKORAN ===
-- Berikan kunci jawaban yang jelas untuk semua bagian.
+- Berikan kunci jawaban yang LENGKAP, JELAS, dan KONSISTEN dengan kolom Kunci Jawaban di Kisi-kisi untuk seluruh nomor soal dari 1 sampai nomor terakhir (tanpa menulis "variatif" atau "kebijakan guru").
 - Berikan rubrik penilaian untuk bagian Uraian agar guru mudah memberikan skor.
 
 VALIDASI:
-- Jumlah soal HARUS tepat sesuai input.
+- Jumlah baris pada tabel Kisi-Kisi HARUS sama persis dengan total jumlah soal (PG + Isian + Uraian) dan mencantumkan semua nomor dari 1 hingga akhir satu per satu.
+- Tidak boleh ada kunci jawaban bertuliskan "variatif", "bervariasi", atau "kebijakan guru".
 - Proporsi tingkat kognitif HARUS sesuai dengan jenis taksonomi dan persentase yang diminta guru.
 - Soal harus sesuai dengan materi yang diberikan.
 `;
@@ -266,19 +272,27 @@ Catatan Level di Kisi-kisi: Tuliskan level SOLO (U, M, R, E) pada kolom Level.`;
     : `- Mode / Karakteristik Soal: SOAL REGULER / STANDAR (Non-HOTS)
   * Susun soal-soal secara lugas, jelas, dan langsung menguji pemahaman konsep sesuai proporsi kognitif di atas tanpa tuntutan stimulus analisis HOTS yang kompleks.`;
 
+  const pgCount = Number(jumlahSoal?.pg ?? 10);
+  const isianCount = Number(jumlahSoal?.isian ?? 5);
+  const uraianCount = Number(jumlahSoal?.uraian ?? 2);
+  const totalSoalCount = pgCount + isianCount + uraianCount;
+
   const userPrompt = `
 BUATKAN SOAL DENGAN DATA BERIKUT:
 - Jenis Penilaian: ${jenisPenilaian}
 - Kelas: ${kelas}
 - Mata Pelajaran: ${mataPelajaran}
 - Materi/Bab: ${materi}
-- Jumlah Soal:
-  - Pilihan Ganda: ${jumlahSoal?.pg ?? 10}
-  - Isian: ${jumlahSoal?.isian ?? 5}
-  - Uraian: ${jumlahSoal?.uraian ?? 2}
+- Jumlah Soal (Total ${totalSoalCount} soal, penomoran berurutan 1 s.d. ${totalSoalCount}):
+  - Pilihan Ganda: ${pgCount} soal${pgCount > 0 ? ` (Nomor 1 s.d. ${pgCount})` : ''}
+  - Isian: ${isianCount} soal${isianCount > 0 ? ` (Nomor ${pgCount + 1} s.d. ${pgCount + isianCount})` : ''}
+  - Uraian: ${uraianCount} soal${uraianCount > 0 ? ` (Nomor ${pgCount + isianCount + 1} s.d. ${totalSoalCount})` : ''}
 ${taxonomyDetails}
 ${hotsInstruction}
-- Catatan Tambahan Kisi-kisi: Pastikan kolom Indikator Soal ditulis secara RINCI dan JELAS (menyebutkan stimulus, aktivitas siswa, materi spesifik, dan target pencapaiannya) sehingga siswa dapat mengerti apa yang akan dikerjakan pada setiap soal.
+- Catatan Tambahan Kisi-kisi:
+  1. Pastikan kolom Indikator Soal ditulis secara RINCI dan JELAS (menyebutkan stimulus, aktivitas siswa, materi spesifik, dan target pencapaiannya) sehingga siswa dapat mengerti apa yang akan dikerjakan pada setiap soal.
+  2. Tabel kisi-kisi WAJIB memuat seluruh nomor soal secara lengkap satu per satu dari nomor 1 hingga nomor ${totalSoalCount} (${totalSoalCount} baris data, tidak boleh digabung).
+  3. Kolom Kunci Jawaban pada tabel kisi-kisi WAJIB berisi kunci jawaban yang lengkap, pasti, dan jelas untuk setiap nomor (termasuk Isian dan Uraian). DILARANG menulis jawaban yang variatif seperti "variatif", "bervariasi", atau "kebijakan guru".
 - Catatan Bahan Bacaan: Apabila soal membutuhkan bahan bacaan/teks stimulus (terutama pada materi teks bacaan, literasi, studi kasus, atau HOTS), sertakan bahan bacaan secara lengkap tepat sebelum nomor soal yang membutuhkannya di bagian Lembar Soal.
 `;
 
