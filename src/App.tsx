@@ -17,13 +17,30 @@ import {
   Shapes,
   Layout,
   Layers,
-  GraduationCap
+  GraduationCap,
+  Sparkles,
+  History,
+  Trash2,
+  X,
+  Search,
+  Clock,
+  FolderOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateExam, ExamRequest } from './services/geminiService';
 import { cn } from './lib/utils';
+
+interface ExamHistoryItem {
+  id: string;
+  createdAt: string;
+  formData: ExamRequest;
+  content: string;
+}
+
+const EXAM_HISTORY_STORAGE_KEY = 'guru_kecil_exam_history_v1';
+const MAX_HISTORY_ITEMS = 30;
 
 export default function App() {
   const [formData, setFormData] = useState<ExamRequest>({
@@ -37,6 +54,7 @@ export default function App() {
       uraian: 2
     },
     taxonomyType: 'solo',
+    isHots: false,
     proporsiKognitifSolo: {
       unistructural: 40,
       multistructural: 30,
@@ -55,6 +73,28 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
+  const [history, setHistory] = useState<ExamHistoryItem[]>(() => {
+    try {
+      const raw = localStorage.getItem(EXAM_HISTORY_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+  const [confirmClearHistory, setConfirmClearHistory] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(EXAM_HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.warn('Gagal menyimpan riwayat ke localStorage:', e);
+    }
+  }, [history]);
 
   const totalProporsi = formData.taxonomyType === 'solo'
     ? formData.proporsiKognitifSolo.unistructural + formData.proporsiKognitifSolo.multistructural + formData.proporsiKognitifSolo.relational + formData.proporsiKognitifSolo.extendedAbstract
@@ -74,15 +114,77 @@ export default function App() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setActiveHistoryId(null);
 
     try {
-      const examContent = await generateExam(formData);
-      setResult(examContent || '');
+      const snapshotForm: ExamRequest = JSON.parse(JSON.stringify(formData));
+      const examContent = await generateExam(snapshotForm, (partialText) => {
+        setResult(partialText);
+      });
+      const finalContent = examContent || '';
+      setResult(finalContent);
+
+      if (finalContent.trim()) {
+        const newItem: ExamHistoryItem = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          createdAt: new Date().toISOString(),
+          formData: snapshotForm,
+          content: finalContent,
+        };
+        setHistory((prev) => [newItem, ...prev].slice(0, MAX_HISTORY_ITEMS));
+        setActiveHistoryId(newItem.id);
+      }
     } catch (err: any) {
       setError(err?.message || 'Gagal menghasilkan soal. Silakan coba lagi.');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoadHistory = (item: ExamHistoryItem) => {
+    setFormData(item.formData);
+    setResult(item.content);
+    setError(null);
+    setActiveHistoryId(item.id);
+    setIsHistoryOpen(false);
+  };
+
+  const handleDeleteHistory = (id: string) => {
+    setHistory((prev) => prev.filter((item) => item.id !== id));
+    if (activeHistoryId === id) {
+      setActiveHistoryId(null);
+    }
+  };
+
+  const handleClearAllHistory = () => {
+    setHistory([]);
+    setActiveHistoryId(null);
+    setConfirmClearHistory(false);
+  };
+
+  const filteredHistory = history.filter((item) => {
+    const q = historySearch.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      item.formData.mataPelajaran.toLowerCase().includes(q) ||
+      item.formData.materi.toLowerCase().includes(q) ||
+      item.formData.jenisPenilaian.toLowerCase().includes(q) ||
+      `kelas ${item.formData.kelas}`.toLowerCase().includes(q)
+    );
+  });
+
+  const formatHistoryDate = (iso: string) => {
+    try {
+      return new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(iso));
+    } catch {
+      return iso;
     }
   };
 
@@ -212,7 +314,24 @@ export default function App() {
                 <h1 className="text-[14px] font-bold tracking-tight text-slate-900 leading-none">EXAM GENERATOR By Guru Kecil</h1>
               </div>
             </div>
-            <div className="flex items-center gap-4 text-sm font-medium text-slate-500">
+            <div className="flex items-center gap-3 text-sm font-medium text-slate-500">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmClearHistory(false);
+                  setIsHistoryOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-brand-primary/10 hover:text-brand-primary text-slate-700 text-xs font-semibold transition-colors border border-slate-200/80"
+              >
+                <History size={14} />
+                <span>Riwayat Soal</span>
+                {history.length > 0 && (
+                  <span className="ml-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-brand-primary text-white">
+                    {history.length}
+                  </span>
+                )}
+              </button>
+              <div className="w-px h-4 bg-slate-200 hidden sm:block"></div>
               <span className="hidden sm:inline">Kurikulum Merdeka</span>
               <div className="w-px h-4 bg-slate-200 hidden sm:block"></div>
               <span className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-bold uppercase tracking-wider">Aktif</span>
@@ -326,6 +445,45 @@ export default function App() {
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Mode Soal HOTS / Non-HOTS */}
+                <div className="space-y-1.5 pt-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Sparkles size={12} className="text-amber-500" />
+                    Tingkat Penalaran (HOTS)
+                  </label>
+                  <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/70">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, isHots: false })}
+                      className={cn(
+                        "py-1.5 px-2 text-xs font-semibold rounded-lg transition-all text-center",
+                        !formData.isHots
+                          ? "bg-white text-brand-primary shadow-xs font-bold border border-slate-200/50"
+                          : "text-slate-500 hover:text-slate-700"
+                      )}
+                    >
+                      Standar (Non-HOTS)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, isHots: true })}
+                      className={cn(
+                        "py-1.5 px-2 text-xs font-semibold rounded-lg transition-all text-center",
+                        formData.isHots
+                          ? "bg-white text-amber-600 shadow-xs font-bold border border-amber-200/70"
+                          : "text-slate-500 hover:text-slate-700"
+                      )}
+                    >
+                      Soal HOTS
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
+                    {formData.isHots
+                      ? 'Soal berbasis stimulus kontekstual, penalaran kritis, & pemecahan masalah tingkat tinggi.'
+                      : 'Soal reguler yang lugas dan langsung mengukur pemahaman konsep sesuai proporsi.'}
+                  </p>
                 </div>
 
                 {/* Kognitif */}
@@ -472,9 +630,9 @@ export default function App() {
               <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">Tips Penyusunan</h3>
               <ul className="text-[11px] text-blue-700 space-y-1.5 list-disc pl-3">
                 <li>Pilih Taksonomi SOLO atau Taksonomi BLOOM sesuai standar penilaian sekolah Anda.</li>
-                <li>Masukkan materi secara detail agar soal lebih spesifik.</li>
-                <li>Gunakan rasio 40-30-20-10 untuk keseimbangan tingkat kesulitan.</li>
-                <li>Soal yang dihasilkan sudah termasuk kisi-kisi, kunci jawaban & pedoman penskoran.</li>
+                <li>Aktifkan mode <strong>Soal HOTS</strong> jika ingin soal berbasis stimulus kontekstual dan penalaran tinggi.</li>
+                <li>Soal literasi atau berbasis teks akan otomatis disertai bahan bacaan lengkap di Lembar Soal.</li>
+                <li>Semua paket soal tersimpan otomatis di menu <strong>Riwayat Soal</strong> agar mudah dibuka kembali.</li>
               </ul>
             </div>
           </aside>
@@ -529,12 +687,22 @@ export default function App() {
                     <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
                       <Shapes size={40} />
                     </div>
-                    <div className="max-w-[280px]">
+                    <div className="max-w-[300px]">
                       <h3 className="font-bold text-slate-800">Mulai Menyusun Soal</h3>
                       <p className="text-sm text-slate-500 mt-2">Atur parameter di panel sebelah kiri lalu klik tombol "Buat Paket Soal" untuk memulai.</p>
+                      {history.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsHistoryOpen(true)}
+                          className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary text-xs font-semibold transition-colors"
+                        >
+                          <History size={14} />
+                          <span>Buka Riwayat Soal ({history.length})</span>
+                        </button>
+                      )}
                     </div>
                   </motion.div>
-                ) : loading ? (
+                ) : !result && loading ? (
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -563,8 +731,14 @@ export default function App() {
                     animate={{ opacity: 1 }}
                     className="markdown-body"
                   >
+                    {loading && (
+                      <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-primary/5 border border-brand-primary/15 text-xs font-medium text-brand-primary">
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>Sedang menulis paket soal secara langsung...</span>
+                      </div>
+                    )}
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {result}
+                      {result || ''}
                     </ReactMarkdown>
                   </motion.div>
                 )}
@@ -594,6 +768,188 @@ export default function App() {
           </p>
         </div>
       </footer>
+
+      {/* Riwayat Soal Slide-Over Drawer */}
+      <AnimatePresence>
+        {isHistoryOpen && (
+          <div className="fixed inset-0 z-50 flex justify-end print:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsHistoryOpen(false)}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            />
+            <motion.aside
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="relative w-full max-w-md bg-white h-full shadow-2xl border-l border-slate-200 flex flex-col z-10"
+            >
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-brand-primary/10 text-brand-primary flex items-center justify-center">
+                    <History size={18} />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-slate-800 text-sm">Riwayat Soal</h2>
+                    <p className="text-[11px] text-slate-500">{history.length} paket soal tersimpan di perangkat ini</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  aria-label="Tutup Riwayat Soal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {history.length > 0 && (
+                <div className="p-4 border-b border-slate-100 space-y-3">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={historySearch}
+                      onChange={(e) => setHistorySearch(e.target.value)}
+                      placeholder="Cari mapel, materi, atau kelas..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400">
+                      Menampilkan {filteredHistory.length} dari {history.length} riwayat
+                    </span>
+                    {!confirmClearHistory ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmClearHistory(true)}
+                        className="text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
+                      >
+                        <Trash2 size={12} />
+                        Hapus Semua
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-600 font-semibold">Yakin?</span>
+                        <button
+                          type="button"
+                          onClick={handleClearAllHistory}
+                          className="px-2 py-0.5 rounded bg-red-600 text-white font-semibold hover:bg-red-700"
+                        >
+                          Ya, Hapus
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmClearHistory(false)}
+                          className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {history.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center py-16 px-6">
+                    <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-300 flex items-center justify-center mb-3">
+                      <History size={28} />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-700">Belum Ada Riwayat Soal</h3>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Setiap paket soal yang selesai dibuat akan tersimpan otomatis di sini agar bisa dibuka, diunduh, atau dicetak ulang kapan saja.
+                    </p>
+                  </div>
+                ) : filteredHistory.length === 0 ? (
+                  <div className="text-center py-12 text-xs text-slate-500">
+                    Tidak ada riwayat yang cocok dengan kata kunci "{historySearch}".
+                  </div>
+                ) : (
+                  filteredHistory.map((item) => {
+                    const isActive = activeHistoryId === item.id;
+                    const totalQuestions =
+                      (item.formData.jumlahSoal?.pg || 0) +
+                      (item.formData.jumlahSoal?.isian || 0) +
+                      (item.formData.jumlahSoal?.uraian || 0);
+                    return (
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "rounded-xl border p-3.5 transition-all space-y-2.5",
+                          isActive
+                            ? "border-brand-primary/40 bg-brand-primary/[0.03] shadow-xs"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-bold text-slate-800 truncate">
+                                {item.formData.mataPelajaran || 'Tanpa Mapel'}
+                              </span>
+                              <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-100 text-slate-600">
+                                Kelas {item.formData.kelas}
+                              </span>
+                              {item.formData.isHots && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-700">
+                                  HOTS
+                                </span>
+                              )}
+                              <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-700 uppercase">
+                                {item.formData.taxonomyType}
+                              </span>
+                            </div>
+                            <p className="text-[11px] font-medium text-slate-500 truncate">
+                              {item.formData.jenisPenilaian}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteHistory(item.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                            title="Hapus riwayat ini"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-100">
+                          {item.formData.materi}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                            <span className="inline-flex items-center gap-1">
+                              <Clock size={11} />
+                              {formatHistoryDate(item.createdAt)}
+                            </span>
+                            <span>•</span>
+                            <span>{totalQuestions} soal</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleLoadHistory(item)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-primary text-white text-[11px] font-semibold hover:bg-brand-primary/90 transition-colors"
+                          >
+                            <FolderOpen size={12} />
+                            <span>Buka Soal</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface ExamRequest {
     uraian: number;
   };
   taxonomyType: TaxonomyType;
+  isHots: boolean;
   proporsiKognitifSolo: {
     unistructural: number;
     multistructural: number;
@@ -25,7 +26,10 @@ export interface ExamRequest {
   };
 }
 
-export async function generateExam(request: ExamRequest): Promise<string> {
+export async function generateExam(
+  request: ExamRequest,
+  onChunk?: (accumulatedText: string) => void
+): Promise<string> {
   const response = await fetch('/api/generate-exam', {
     method: 'POST',
     headers: {
@@ -34,6 +38,57 @@ export async function generateExam(request: ExamRequest): Promise<string> {
     body: JSON.stringify(request),
   });
 
+  const contentType = response.headers.get('content-type') || '';
+
+  // Handle Server-Sent Events (SSE) stream
+  if (contentType.includes('text/event-stream') && response.body) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let accumulated = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith(':')) continue;
+        if (!line.startsWith('data:')) continue;
+
+        const payload = line.slice(5).trim();
+        if (!payload) continue;
+
+        let parsed: any;
+        try {
+          parsed = JSON.parse(payload);
+        } catch {
+          continue;
+        }
+
+        if (parsed.error) {
+          throw new Error(parsed.error);
+        }
+
+        if (typeof parsed.chunk === 'string') {
+          accumulated += parsed.chunk;
+          onChunk?.(accumulated);
+        }
+      }
+    }
+
+    if (!accumulated.trim()) {
+      throw new Error('Server tidak mengembalikan konten soal. Silakan coba lagi.');
+    }
+
+    return accumulated;
+  }
+
+  // Fallback for JSON or error responses (400, 405, 500, or proxy HTML errors)
   const rawText = await response.text();
   let data: any = null;
 
@@ -41,13 +96,14 @@ export async function generateExam(request: ExamRequest): Promise<string> {
     try {
       data = JSON.parse(rawText);
     } catch {
-      // If it is not JSON (e.g., HTML error page from host)
       if (!response.ok) {
         throw new Error(
-          `Server mengembalikan status ${response.status} (${response.statusText || 'Error'}). Pastikan API route dan GEMINI_API_KEY sudah terpasang di Vercel.`
+          `Server mengembalikan status ${response.status} (${response.statusText || 'Error'}). Silakan coba lagi atau periksa pengaturan server.`
         );
       }
-      throw new Error('Respon dari server tidak berformat JSON yang valid.');
+      throw new Error(
+        'Endpoint /api/generate-exam tidak mengembalikan respon API yang valid. Pastikan server API berjalan dengan benar.'
+      );
     }
   }
 
