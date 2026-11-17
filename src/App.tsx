@@ -201,103 +201,371 @@ export default function App() {
   const handleDownloadWord = () => {
     if (!result) return;
 
-    // A simple way to generate a Word-compatible file (HTML with .doc extension)
+    const escapeHtml = (text: string) =>
+      text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const formatInline = (text: string) =>
+      escapeHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
+
     const header = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><title>Paket Soal</title>
+      <head>
+      <meta charset='utf-8'>
+      <title>Paket Soal - ${escapeHtml(formData.mataPelajaran)} Kelas ${escapeHtml(formData.kelas)}</title>
+      <!--[if gte mso 9]>
+      <xml>
+        <w:WordDocument>
+          <w:View>Print</w:View>
+          <w:Zoom>100</w:Zoom>
+          <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+      </xml>
+      <![endif]-->
       <style>
-        body { font-family: 'Times New Roman', serif; line-height: 1.5; font-size: 11pt; padding: 20px; }
-        table { border-collapse: collapse; width: 100%; border: 1px solid #000; margin-bottom: 20px; table-layout: auto; }
-        th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 10pt; vertical-align: top; }
-        th { background-color: #f2f2f2; font-weight: bold; }
-        h1, h2, h3 { margin-top: 20px; font-size: 13pt; font-weight: bold; text-decoration: underline; }
-        .kop { text-align: center; border-bottom: 3px double #000; margin-bottom: 20px; padding-bottom: 10px; font-weight: bold; font-size: 12pt; }
-        .soal-item { margin-top: 10px; margin-bottom: 5px; font-weight: bold; }
-        .opsi-item { margin-left: 20px; }
-        .divider { border-top: 1px solid #000; margin: 20px 0; }
+        @page Section1 {
+          size: 21cm 29.7cm;
+          margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+          mso-header-margin: 1cm;
+          mso-footer-margin: 1cm;
+        }
+        div.Section1 { page: Section1; }
+        body {
+          font-family: 'Times New Roman', Times, serif;
+          line-height: 1.45;
+          font-size: 11pt;
+          color: #111827;
+          margin: 0;
+        }
+        h2.section-heading {
+          margin-top: 6pt;
+          margin-bottom: 10pt;
+          font-size: 12.5pt;
+          font-weight: bold;
+          text-align: center;
+          text-transform: uppercase;
+          letter-spacing: 0.4pt;
+          border-bottom: 1.5pt solid #1e293b;
+          padding-bottom: 4pt;
+        }
+        h3 {
+          margin-top: 12pt;
+          margin-bottom: 6pt;
+          font-size: 11.5pt;
+          font-weight: bold;
+        }
+        table.kisi-table {
+          border-collapse: collapse;
+          width: 100%;
+          table-layout: fixed;
+          margin-top: 6pt;
+          margin-bottom: 14pt;
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+          border: 1pt solid #1e293b;
+        }
+        table.kisi-table thead {
+          display: table-header-group;
+        }
+        table.kisi-table tr {
+          page-break-inside: avoid;
+        }
+        table.kisi-table th {
+          border: 1pt solid #1e293b;
+          background-color: #e2e8f0;
+          color: #0f172a;
+          font-weight: bold;
+          font-size: 9.5pt;
+          padding: 6pt 5pt;
+          text-align: center;
+          vertical-align: middle;
+          word-wrap: break-word;
+        }
+        table.kisi-table td {
+          border: 1pt solid #334155;
+          font-size: 9.5pt;
+          line-height: 1.35;
+          padding: 5pt 5pt;
+          vertical-align: top;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        table.kisi-table tr.even-row td {
+          background-color: #f8fafc;
+        }
+        .kop {
+          border-top: 1.5pt solid #000000;
+          border-bottom: 3pt double #000000;
+          margin: 8pt 0 14pt 0;
+          padding: 8pt 6pt;
+          font-weight: bold;
+          font-size: 11pt;
+          line-height: 1.5;
+        }
+        .bagian-header {
+          font-weight: bold;
+          margin-top: 14pt;
+          margin-bottom: 4pt;
+          font-size: 11.5pt;
+          text-decoration: underline;
+        }
+        .petunjuk {
+          font-style: italic;
+          margin-bottom: 8pt;
+          font-size: 10.5pt;
+        }
+        .bacaan-intro {
+          font-style: italic;
+          font-weight: bold;
+          margin-top: 10pt;
+          margin-bottom: 4pt;
+        }
+        .bacaan-box {
+          border: 0.75pt solid #94a3b8;
+          background-color: #f8fafc;
+          padding: 8pt 10pt;
+          margin-bottom: 8pt;
+          font-size: 10.5pt;
+          line-height: 1.5;
+        }
+        .soal-item {
+          margin-top: 8pt;
+          margin-bottom: 3pt;
+          text-align: justify;
+        }
+        .opsi-item {
+          margin-left: 18pt;
+          margin-bottom: 2pt;
+        }
+        .paragraph-line {
+          margin-bottom: 4pt;
+          text-align: justify;
+        }
+        .divider {
+          border-top: 1pt solid #cbd5e1;
+          margin: 12pt 0;
+        }
       </style>
-      </head><body>
+      </head>
+      <body>
+      <div class="Section1">
     `;
-    const footer = "</body></html>";
-    
-    // Improved conversion logic
+    const footer = '</div></body></html>';
+
+    const parseTableCells = (line: string): string[] => {
+      const cleaned = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+      return cleaned.split('|').map((c) => c.trim());
+    };
+
+    const isSeparatorRow = (line: string): boolean => {
+      const trimmed = line.trim();
+      return /^\|?[\s:|-]+\|?$/.test(trimmed) && trimmed.includes('-');
+    };
+
+    const isTableLine = (line: string, currentlyInTable: boolean): boolean => {
+      const trimmed = line.trim();
+      if (!trimmed.includes('|')) return false;
+      if (isSeparatorRow(trimmed)) return true;
+      if (trimmed.startsWith('|') || trimmed.endsWith('|')) return true;
+      if (trimmed.split('|').length >= 3) return true;
+      return currentlyInTable;
+    };
+
+    const flushTable = (rows: string[][]): string => {
+      if (rows.length === 0) return '';
+      const colCount = Math.max(...rows.map((r) => r.length));
+      const defaultKisiWidths = ['5%', '17%', '13%', '35%', '8%', '11%', '11%'];
+      const colWidths =
+        colCount === 7
+          ? defaultKisiWidths
+          : Array.from({ length: colCount }, () => `${Math.floor(100 / colCount)}%`);
+
+      const colgroup = `<colgroup>${colWidths
+        .map((w) => `<col style="width:${w};" width="${w}" />`)
+        .join('')}</colgroup>`;
+
+      const [headerRow, ...bodyRows] = rows;
+      const normalizedHeader = Array.from({ length: colCount }, (_, idx) => headerRow[idx] ?? '');
+      const theadHtml = `<thead><tr>${normalizedHeader
+        .map(
+          (cell, idx) =>
+            `<th width="${colWidths[idx]}" style="width:${colWidths[idx]};">${formatInline(cell)}</th>`
+        )
+        .join('')}</tr></thead>`;
+
+      const tbodyHtml =
+        bodyRows.length > 0
+          ? `<tbody>${bodyRows
+              .map((row, rIdx) => {
+                const cells = Array.from({ length: colCount }, (_, idx) => row[idx] ?? '');
+                const rowClass = rIdx % 2 === 1 ? ' class="even-row"' : '';
+                return `<tr${rowClass}>${cells
+                  .map((cell, idx) => {
+                    const isCentered =
+                      colCount === 7 && (idx === 0 || idx === 4 || idx === 5);
+                    const align = isCentered ? 'center' : 'left';
+                    return `<td width="${colWidths[idx]}" align="${align}" style="width:${colWidths[idx]};text-align:${align};">${formatInline(cell)}</td>`;
+                  })
+                  .join('')}</tr>`;
+              })
+              .join('')}</tbody>`
+          : '';
+
+      return `<table class="kisi-table" border="1" cellspacing="0" cellpadding="6" width="100%">${colgroup}${theadHtml}${tbodyHtml}</table>`;
+    };
+
     const lines = result.split('\n');
     let htmlContent = '';
     let inTable = false;
-    let tableRows: string[] = [];
-    let kopCounter = 0;
+    let tableRows: string[][] = [];
+    let inKop = false;
+    let inBacaan = false;
+    let bacaanBuffer: string[] = [];
+    let hasPrintedContent = false;
 
-    lines.forEach((line) => {
-      let processedLine = line.trim();
+    const flushBacaan = () => {
+      if (inBacaan && bacaanBuffer.length > 0) {
+        htmlContent += `<div class="bacaan-box">${bacaanBuffer
+          .map((l) => `<div>${formatInline(l)}</div>`)
+          .join('')}</div>`;
+      }
+      bacaanBuffer = [];
+      inBacaan = false;
+    };
 
-      // Handle KOP (Header) - toggles between start and end
-      if (processedLine === '---------------------------------------------------------') {
-        if (kopCounter % 2 === 0) {
+    lines.forEach((rawLine) => {
+      const processedLine = rawLine.trim();
+
+      // Handle KOP border lines (10+ dashes)
+      if (/^-{10,}$/.test(processedLine)) {
+        if (inTable) {
+          htmlContent += flushTable(tableRows);
+          tableRows = [];
+          inTable = false;
+        }
+        flushBacaan();
+        if (!inKop) {
           htmlContent += '<div class="kop">';
+          inKop = true;
         } else {
           htmlContent += '</div>';
+          inKop = false;
         }
-        kopCounter++;
+        hasPrintedContent = true;
         return;
       }
 
-      // Handle Table Rows
-      if (processedLine.startsWith('|') && processedLine.endsWith('|')) {
-        if (processedLine.includes('---')) return; // Skip Markdown separator
+      if (inKop) {
+        if (processedLine) {
+          htmlContent += `<div>${formatInline(processedLine)}</div>`;
+        }
+        return;
+      }
+
+      // Handle Markdown Table Rows
+      if (isTableLine(processedLine, inTable)) {
+        flushBacaan();
         inTable = true;
-        const cells = processedLine.split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1);
-        const isHeader = tableRows.length === 0 && (processedLine.toLowerCase().includes('no') || processedLine.toLowerCase().includes('tujuan'));
-        const tag = isHeader ? 'th' : 'td';
-        const row = `<tr>${cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('')}</tr>`;
-        tableRows.push(row);
+        if (isSeparatorRow(processedLine)) {
+          return;
+        }
+        tableRows.push(parseTableCells(processedLine));
+        hasPrintedContent = true;
         return;
       } else if (inTable) {
-        // Flush table
-        htmlContent += `<table>${tableRows.join('')}</table>`;
+        htmlContent += flushTable(tableRows);
         tableRows = [];
         inTable = false;
       }
 
-      // Handle other elements
+      // Handle Section Headings (=== ... ===)
       if (processedLine.startsWith('=== ') && processedLine.endsWith(' ===')) {
-        const title = processedLine.replace(/=== /g, '').replace(/ ===/g, '');
-        htmlContent += `<h2>${title}</h2>`;
-      } else if (processedLine.startsWith('#')) {
-        const level = (processedLine.match(/^#+/) || ['#'])[0].length;
-        htmlContent += `<h${level + 1}>${processedLine.replace(/^#+ /, '')}</h${level + 1}>`;
-      } else if (/^[0-9]+\./.test(processedLine)) {
-        htmlContent += `<div class="soal-item">${processedLine}</div>`;
-      } else if (/^[A-D]\./.test(processedLine)) {
-        htmlContent += `<div class="opsi-item">${processedLine}</div>`;
-      } else if (processedLine === '---' || processedLine === '***') {
-        htmlContent += '<div class="divider"></div>';
-      } else if (processedLine === '') {
-        htmlContent += '<br>';
-      } else if (processedLine.toUpperCase() === processedLine && processedLine.length > 5 && !processedLine.includes('|')) {
-        // Likely a section header like "I. PILIHAN GANDA"
-        htmlContent += `<div style="font-weight: bold; margin-top: 15px; text-decoration: underline;">${processedLine}</div>`;
-      } else {
-        htmlContent += `<div>${processedLine}</div>`;
+        flushBacaan();
+        const title = processedLine.replace(/^===\s*/, '').replace(/\s*===$/, '');
+        if (hasPrintedContent) {
+          htmlContent += '<br clear="all" style="page-break-before:always;" />';
+        }
+        htmlContent += `<h2 class="section-heading">${escapeHtml(title)}</h2>`;
+        hasPrintedContent = true;
+        return;
       }
+
+      // Handle Reading Passage Intro ("Bacalah teks/cerita/dialog berikut...")
+      if (/^Bacalah\s+(teks|cerita|bacaan|dialog|puisi|paragraf|wacana)/i.test(processedLine)) {
+        flushBacaan();
+        htmlContent += `<div class="bacaan-intro">${formatInline(processedLine)}</div>`;
+        inBacaan = true;
+        hasPrintedContent = true;
+        return;
+      }
+
+      // Collect reading passage lines until a numbered question or section header starts
+      if (inBacaan) {
+        if (/^[0-9]+\.\s+/.test(processedLine) || /^(I|II|III|IV)\.\s+/.test(processedLine)) {
+          flushBacaan();
+        } else {
+          if (processedLine !== '') {
+            bacaanBuffer.push(processedLine);
+          }
+          return;
+        }
+      }
+
+      if (processedLine.startsWith('#')) {
+        const level = (processedLine.match(/^#+/) || ['#'])[0].length;
+        const headingText = processedLine.replace(/^#+\s*/, '');
+        htmlContent += `<h${Math.min(level + 1, 4)}>${formatInline(headingText)}</h${Math.min(level + 1, 4)}>`;
+      } else if (/^(I|II|III|IV)\.\s+/.test(processedLine)) {
+        htmlContent += `<div class="bagian-header">${formatInline(processedLine)}</div>`;
+      } else if (/^Petunjuk:/i.test(processedLine)) {
+        htmlContent += `<div class="petunjuk">${formatInline(processedLine)}</div>`;
+      } else if (/^[0-9]+\.\s*/.test(processedLine)) {
+        htmlContent += `<div class="soal-item">${formatInline(processedLine)}</div>`;
+      } else if (/^[A-D]\.\s*/.test(processedLine)) {
+        htmlContent += `<div class="opsi-item">${formatInline(processedLine)}</div>`;
+      } else if (processedLine === '---' || processedLine === '***') {
+        if (hasPrintedContent) {
+          htmlContent += '<div class="divider"></div>';
+        }
+      } else if (processedLine === '') {
+        // Skip redundant blank lines to keep spacing tight and neat
+      } else if (
+        processedLine.toUpperCase() === processedLine &&
+        processedLine.length > 5 &&
+        !processedLine.includes('|')
+      ) {
+        htmlContent += `<div class="bagian-header">${formatInline(processedLine)}</div>`;
+      } else {
+        htmlContent += `<div class="paragraph-line">${formatInline(processedLine)}</div>`;
+      }
+      hasPrintedContent = true;
     });
 
-    // Final table flush if needed
     if (inTable) {
-      htmlContent += `<table>${tableRows.join('')}</table>`;
+      htmlContent += flushTable(tableRows);
+    }
+    flushBacaan();
+    if (inKop) {
+      htmlContent += '</div>';
     }
 
     const source = header + htmlContent + footer;
     const blob = new Blob(['\ufeff', source], {
-      type: 'application/msword'
+      type: 'application/msword',
     });
-    
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Soal_${formData.mataPelajaran}_Kelas${formData.kelas}.doc`;
+    link.download = `Soal_${formData.mataPelajaran || 'Paket'}_Kelas${formData.kelas}.doc`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
